@@ -3,7 +3,7 @@
         :title="title"
         :class="['table-action-item', isDisable, className, ...classNameList]"
         @click="handleClick">
-        <Icon v-if="icon" :type="icon" />
+        <span v-if="icon" class="iconfont" :class="icon"></span>
         <span v-else :class="['iconfont', iconfont]"></span>
     </span>
 </template>

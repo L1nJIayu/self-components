@@ -19,18 +19,24 @@
         </div>
 
         <!-- 列表 -->
-        <base-list :table-columns="tableColumns" :table-data="tableData" :table-loading="tableLoading">
+        <base-list :table-columns="tableColumns" :table-data="tableData" :table-action="tableAction" :table-loading="tableLoading">
             <template #action="{row}">
                 <table-action>
-                    <table-action-item title="详情" icon="md-eye" @take-action="showDetailModal(row)"></table-action-item>
-                    <table-action-item title="编辑" icon="ios-create-outline" @take-action="showEditModal(row)"></table-action-item>
-                    <table-action-item title="删除" icon="ios-trash" @take-action="showDeleteModal(row)"></table-action-item>
+                    <table-action-item title="详情" icon="icon-detail" @take-action="showDetailModal(row)"></table-action-item>
+                    <table-action-item title="编辑" icon="icon-edit" @take-action="showEditModal(row)"></table-action-item>
+                    <table-action-item title="删除" icon="icon-delete" @take-action="showDeleteModal(row)"></table-action-item>
                 </table-action>
             </template>
         </base-list>
 
         <!-- 分页控件 -->
-        <base-page :page-num="_pageNum" :page-size="_pageSize" :page-total="pageTotal" @change-page="changePage"></base-page>
+        <base-page
+            :page-num="_pageNum"
+            :page-size="_pageSize"
+            :page-total="pageTotal"
+            @change-page-num="changePageNum"
+            @change-page-size="changePageSize">
+        </base-page>
 
         <!-- 新增 -->
         <el-dialog title="新增" :visible.sync="addModal" :close-on-click-modal="false">
@@ -115,6 +121,14 @@ export default {
             type: Array,
             require: true,
             default: () => []
+        },
+        tableAction: {
+            type: Object,
+            default: {
+                detail: false,
+                edit: false,
+                delete: false
+            }
         },
         /* 分页组件 */
         pageNum: {
@@ -220,8 +234,12 @@ export default {
             this.tableLoading = false
         },
         // 换页
-        changePage(pageNum) {
+        changePageNum(pageNum) {
             this._pageNum = pageNum
+            this.getList()
+        },
+        changePageSize(pageSize) {
+            this._pageSize = pageSize
             this.getList()
         },
 

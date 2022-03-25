@@ -1,10 +1,24 @@
 <template>
     <div class="base-list">
-        <Table :columns="tableColumns" :data="tableData" :loading="tableLoading">
-            <template slot="action" slot-scope="{ row }">
-                <slot name="action" :row="row"></slot>
-            </template>
-        </Table>
+        <el-table :columns="tableColumns" :data="tableData" v-loading="tableLoading">
+            
+            <el-table-column
+                v-for="(item, index) in tableColumns"
+                :key="index"
+                :prop="item.key"
+                :label="item.title"
+                :formatter="item.formatter">
+            </el-table-column>
+            <el-table-column
+                v-if="tableAction.detail || tableAction.edit || tableAction.delete"
+                fixed="right"
+                label="操作"
+                width="100">
+                <template slot-scope="{row}">
+                    <slot name="action" :row="row"></slot>
+                </template>
+            </el-table-column>
+        </el-table>
     </div>
 </template>
 
@@ -24,6 +38,14 @@ export default {
             type: Array,
             require: true,
             default: () => ({})
+        },
+        tableAction: {
+            type: Object,
+            default: {
+                detail: false,
+                edit: false,
+                delete: false
+            }
         },
         tableLoading: {
             type: Boolean,

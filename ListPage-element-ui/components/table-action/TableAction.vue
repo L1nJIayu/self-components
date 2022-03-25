@@ -4,7 +4,7 @@
         @mouseenter="showMore = true"
         @mouseleave="showMore = false">
         <div v-show="!showMore">
-            <Icon type="ios-more" ></Icon>
+            <span class="iconfont icon-more"></span>
         </div>
         <div v-show="showMore">
             <slot></slot>

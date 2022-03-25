@@ -1,6 +1,13 @@
 <template>
     <div class="base-page">
-        <el-pagination :current-page="pageNum" :page-size="pageSize" :total="pageTotal" @on-change="changePage"></el-pagination>
+        <el-pagination
+            layout="total, sizes, prev, pager, next, jumper"
+            :current-page="pageNum"
+            :page-size="pageSize"
+            :total="pageTotal"
+            @size-change="changePageSize"
+            @current-change="changePageNum">
+        </el-pagination>
     </div>
 </template>
 
@@ -25,8 +32,11 @@ export default {
         }
     },
     methods: {
-        changePage(pageNum) {
-            this.$emit('change-page', pageNum)
+        changePageSize(pageSize) {
+            this.$emit('change-page-size', pageSize)
+        },
+        changePageNum(pageNum) {
+            this.$emit('change-page-num', pageNum)
         }
     }
 }

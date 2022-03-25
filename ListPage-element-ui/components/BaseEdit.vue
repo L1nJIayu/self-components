@@ -117,6 +117,7 @@ export default {
             this.formData = JSON.parse(JSON.stringify(formData))
 
             this.isFormInit = true
+
         },
         async getDetail() {
             try {
@@ -124,15 +125,32 @@ export default {
                 const { data, errorCode, errorMsg } = res
                 if(errorCode === 2000) {
                     this.detail = data
+                    
+                    const checkboxProps = this.formList.filter(item => item.type === 'checkbox').map(item => item.prop)
+
                     Object.keys(this.formData).forEach(propertyName => {
-                        this.formData[propertyName] = data[propertyName]
+                        if(checkboxProps.includes(propertyName) && (this.detail[propertyName] == null || this.detail[propertyName] == undefined)) { // 防止后端传递checkbox类型的字段为null或者undefined导致页面报错
+                            this.formData[propertyName] = []
+                        } else {
+                            this.formData[propertyName] = this.detail[propertyName]
+                        }
                     })
-                    console.log('data',data)
+
                 } else {
                     this.$message({ type: 'error', message: `${ errorCode }：列表数据获取失败：${ errorMsg || '未知' }` })
                 }
             } catch (err) {
                 console.error(err)
+            }
+        },
+        transformCheckboxNullValue() {
+            const checkboxProps = this.formList.filter(item => item.type === 'checkbox')
+            if(checkboxProps.length !== 0) {
+                checkboxProps.formData(item => {
+                    if(this.formData[item.prop] == undefined || this.formData[item.prop] == null) {
+                        this.formData[item.prop] = []
+                    }
+                })
             }
         },
         setPlaceholder({ type, placeholder }) {
