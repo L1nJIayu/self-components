@@ -1,6 +1,6 @@
 <template>
     <div class="base-page">
-        <Page :current="pageNum" :page-size="pageSize" :total="pageTotal" @on-change="changePage"></Page>
+        <el-pagination :current-page="pageNum" :page-size="pageSize" :total="pageTotal" @on-change="changePage"></el-pagination>
     </div>
 </template>
 
