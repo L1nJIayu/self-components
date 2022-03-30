@@ -6,7 +6,10 @@
                 v-for="(item, index) in detailList" :key="index">
                 <div class="detail-item">
                     <div class="label">{{ item.label }}：</div>
-                    <div class="value">{{ detail[item.prop] }}</div>
+                    <div class="value">
+                        <a v-if="item.type=='link'" :target="item.linkTarget || '_blank'" :href="detail[item.linkProp] || detail[item.prop]">{{ detail[item.prop] }}</a>
+                        <span v-else>{{ detail[item.prop] | handleNullValue }}</span>
+                    </div>
                 </div>
             </el-col>
         </el-row>
@@ -26,16 +29,21 @@ export default {
             type: Array,
             require: true,
             default: () => []
-        },
-        detailFormat: {
-            type: Object,
-            default: () => ({})
         }
     },
     data() {
         return {
             sm: 12,
             detail: {}
+        }
+    },
+    filters: {
+        handleNullValue(value) {
+            if(value == null || value == undefined || value == '') {
+                return '- -'
+            } else {
+                return value
+            }
         }
     },
     methods: {
@@ -60,11 +68,9 @@ export default {
             }
         },
         formatPropValue() {
-            this.detailList.forEach(({ prop, format }) => {
+            this.detailList.forEach(({ prop, formatter }) => {
 
-
-                const formatter = this.detailFormat[format]
-                if(format && formatter) {
+                if(formatter) {
                     
                     if(formatter instanceof Array) {   // Array
                         const _target = formatter.find(item => item.value == this.detail[prop])
@@ -78,8 +84,6 @@ export default {
             })
         }
     },
-    created() {
-        },
     mounted() {
         this.initDetail()
         this.getDetail()

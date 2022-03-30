@@ -26,7 +26,7 @@
                         :placeholder="item.label"
                         :clearable="checkClearable(item.clearable)"
                         :filterable="checkFilterable(item.filterable)">
-                        <el-option v-for="(item, index) in item.selectList" :key="index" :value="item.value" :label="item.label"></el-option>
+                        <el-option v-for="(item, index) in item.optionList" :key="index" :value="item.value" :label="item.label"></el-option>
                     </el-select>
 
                     <!-- 日期选择 -->
@@ -105,7 +105,7 @@
  *  - label            标签名，用于placeholder
  *  - prop             字段名
  *  - type             表单类型(text、select、date、datetime、area)
- *  - selectList       type为select的情况下，设置selectList
+ *  - optionList       type为select的情况下，设置optionList
  *  - filterable       默认false，用于搜索下拉列表
  *  - clearable        默认true，清空表单
  * 

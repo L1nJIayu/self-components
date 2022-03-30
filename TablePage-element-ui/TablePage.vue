@@ -19,15 +19,22 @@
         </div>
 
         <!-- 列表 -->
-        <base-list :table-columns="tableColumns" :table-data="tableData" :table-action="tableAction" :table-loading="tableLoading">
+        <base-table :table-columns="tableColumns" :table-data="tableData" :table-action="tableAction" :table-loading="tableLoading">
             <template #action="{row}">
                 <table-action>
-                    <table-action-item title="详情" icon="icon-detail" @take-action="showDetailModal(row)"></table-action-item>
-                    <table-action-item title="编辑" icon="icon-edit" @take-action="showEditModal(row)"></table-action-item>
-                    <table-action-item title="删除" icon="icon-delete" @take-action="showDeleteModal(row)"></table-action-item>
+                    
+                    <table-action-item
+                        v-for="(actionItem, actionIndex) in tableActionList"
+                        :key="actionIndex"
+                        :title="actionItem.title"
+                        :icon="actionItem.icon"
+                        @take-action="tableTakeAction(actionItem, row)">
+                    </table-action-item>
+
+                    <slot name="table-action" :row="row"></slot>
                 </table-action>
             </template>
-        </base-list>
+        </base-table>
 
         <!-- 分页控件 -->
         <base-page
@@ -72,8 +79,7 @@
                 v-if="detailModal"
                 :id="currentActionId"
                 :detail-api="detailApi"
-                :detail-list="detailList"
-                :detail-format="detailFormat">
+                :detail-list="detailList">
             </base-detail>
         </el-dialog>
 
@@ -82,16 +88,25 @@
 
 <script>
 import BaseSearch from './components/BaseSearch.vue'
-import BaseList from './components/BaseList.vue'
+import BaseTable from './components/BaseTable.vue'
 import BasePage from './components/BasePage.vue'
 import TableAction from './components/table-action/TableAction.vue'
 import TableActionItem from './components/table-action/TableActionItem.vue'
 import BaseAdd from './components/BaseAdd.vue'
 import BaseEdit from './components/BaseEdit.vue'
 import BaseDetail from './components/BaseDetail.vue'
+import {
+    ACTION_TYPE_DETAIL,
+    ACTION_TYPE_EDIT,
+    ACTION_TYPE_DELETE,
+    ACTION_TYPE_START,
+    ACTION_TYPE_STOP,
+    ACTION_TYPE_DOWNLOAD,
+    ACTION_TYPE_PREVIEW,
+} from './constants'
 export default {
-    name: 'ListPage',
-    components: { BaseSearch, BaseList, BasePage, TableAction, TableActionItem, BaseAdd, BaseEdit, BaseDetail },
+    name: 'TablePage',
+    components: { BaseSearch, BaseTable, BasePage, TableAction, TableActionItem, BaseAdd, BaseEdit, BaseDetail },
     props: {
         listName: {
             type: String,
@@ -103,6 +118,8 @@ export default {
         editApi: { type: Function, require: true, default: function() {} },
         detailApi: { type: Function, require: true, default: function() {} },
         deleteApi: { type: Function, require: true, default: function() {} },
+        downloadApi: { type: Function, require: true, default: function() {} },
+        previewApi: { type: Function, require: true, default: function() {} },
         /* 搜索组建 */
         searchFormList: {
             type: Array,
@@ -144,10 +161,6 @@ export default {
             type: Array,
             default: () => []
         },
-        detailFormat: {
-            type: Object,
-            default: () => ({})
-        },
 
         formLabelWidth: {
             type: String,
@@ -174,7 +187,7 @@ export default {
         },
 
         /* 删除 */
-        deleteLabel: String
+        deleteLabelProp: String
     },
     data() {
         return {
@@ -200,14 +213,80 @@ export default {
 
         }
     },
+    computed: {
+        tableActionList() {
+            if(this.tableAction.show && this.tableAction.actions && this.tableAction.actions.length.length !== 0) {
+                
+                const legalAction = [
+                    ACTION_TYPE_DETAIL,
+                    ACTION_TYPE_EDIT,
+                    ACTION_TYPE_DELETE,
+                    ACTION_TYPE_START,
+                    ACTION_TYPE_STOP,
+                    ACTION_TYPE_DOWNLOAD,
+                    ACTION_TYPE_PREVIEW
+                ]
+                const actionList = this.tableAction.actions.filter(item => legalAction.includes(item))
+
+                return actionList.map(item => {
+                    switch(item) {
+                        case ACTION_TYPE_DETAIL:
+                            return {
+                                actionType: item,
+                                title: '详情',
+                                icon: 'icon-detail'
+                            }
+                        case ACTION_TYPE_EDIT:
+                            return {
+                                actionType: item,
+                                title: '编辑',
+                                icon: 'icon-edit'
+                            }
+                        case ACTION_TYPE_DELETE:
+                            return {
+                                actionType: item,
+                                title: '删除',
+                                icon: 'icon-delete'
+                            }
+                        case ACTION_TYPE_START:
+                            return {
+                                actionType: item,
+                                title: '启用',
+                                icon: 'icon-start'
+                            }
+                        case ACTION_TYPE_STOP:
+                            return {
+                                actionType: item,
+                                title: '停用',
+                                icon: 'icon-stop'
+                            }
+                        case ACTION_TYPE_DOWNLOAD:
+                            return {
+                                actionType: item,
+                                title: '下载',
+                                icon: 'icon-download',
+                            }
+                        case ACTION_TYPE_PREVIEW:
+                            return {
+                                actionType: item,
+                                title: '查看',
+                                icon: 'icon-file'
+                            }
+
+                    }
+                })
+
+            } else {
+                return []
+            }
+        }
+    },
     methods: {
         // 搜索
         search(searchObj) {
             this.searchObj = searchObj
             this._pageNum = 1
             this.getList()
-
-            // console.log('searchObj', searchObj)
         },
         // 列表获取
         async getList() {
@@ -221,8 +300,8 @@ export default {
                 
                 let res = await this.listApi(params)
                 if(res) {
-                    const { data: { list, total } } = res
-                    this.tableData = list
+                    const { data: { records, total } } = res
+                    this.tableData = records
                     this.pageTotal = total
                 } else {
                     console.error(res)
@@ -241,6 +320,33 @@ export default {
         changePageSize(pageSize) {
             this._pageSize = pageSize
             this.getList()
+        },
+
+        // 【操作】
+        tableTakeAction({ actionType }, row) {
+            switch(actionType) {
+                case ACTION_TYPE_DETAIL:
+                    this.showDetailModal(row)
+                    break
+                case ACTION_TYPE_EDIT:
+                    this.showEditModal(row)
+                    break
+                case ACTION_TYPE_DELETE:
+                    this.showDeleteModal(row)
+                    break
+                case ACTION_TYPE_START:
+                    this.handleStart(row)
+                    break
+                case ACTION_TYPE_STOP:
+                    this.handleStop(row)
+                    break
+                case ACTION_TYPE_DOWNLOAD:
+                    this.downloadApi(row)
+                    break
+                case ACTION_TYPE_PREVIEW:
+                    this.previewApi(row)
+                    break
+            }
         },
 
         /* 新增相关 */
@@ -263,10 +369,13 @@ export default {
             this.editModal = true
             this.currentActionId = id
         },
+
+        /* 删除相关 */
         async showDeleteModal(row) {
-            const deleteLabel = this.deleteLabel ? row[this.deleteLabel] : ''
+            console.log(this.deleteLabelProp)
+            const deleteLabelProp = this.deleteLabelProp ? row[this.deleteLabelProp] : ''
             try {
-                await this.$confirm(`你确定要删除 ${ deleteLabel } 吗？`, '提示', {
+                await this.$confirm(`你确定要删除 ${ deleteLabelProp } 吗？`, '提示', {
                     confirmButtonText: '确定',
                     cancelButtonText: '取消',
                     type: 'warning'
@@ -275,16 +384,26 @@ export default {
                 this.$message({ type: 'success', message: '删除成功!' })
                 this.getList()
 
-            } catch(e) {
-                if(e !== 'cancel') {
-                    this.$message({ type: 'error', message: err })
+            } catch(err) {
+                if(err && err !== 'cancel') {
+                    console.error(err)
+                    // this.$message({ type: 'error', message: e })
                 }
             }
         },
         handleEditSuccess() {
             this.editModal = false
             this.getList()
-        }
+        },
+
+        /* 启用/停用 相关 */
+        handleStart(row) {
+            console.log('启用')
+        },
+        handleStop(row) {
+            console.log('停用')
+        },
+
     },
     created() {
         // 初始化

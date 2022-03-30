@@ -3,16 +3,14 @@
         :title="title"
         :class="['table-action-item', isDisable, className, ...classNameList]"
         @click="handleClick">
-        <span v-if="icon" class="iconfont" :class="icon"></span>
-        <span v-else :class="['iconfont', iconfont]"></span>
+        <span class="iconfont" :class="icon"></span>
     </span>
 </template>
 
 <script>
 /**
  * @param title             标签提示
- * @param icon              Iview的icon名称
- * @param iconfont          阿里第三方icon矢量图标
+ * @param icon              阿里第三方icon矢量图标
  * @param className         类名（支持单个类）
  * @param classNameList     类名（支持多个类）
  * @param disabled          是否禁用
@@ -24,10 +22,6 @@ export default {
             default: ''
         },
         icon: {
-            type: String,
-            default: ''
-        },
-        iconfont: {
             type: String,
             default: ''
         },
